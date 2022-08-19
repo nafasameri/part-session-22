@@ -1,15 +1,28 @@
 module.exports = (query) => {
-    const splits = query.split('?');
+    // console.log(query.split(/[?&=]/));
+
+    var splits = query.split('?');
     const url = splits[0];
-    const prop = splits[1].split('&');
 
     let output = {
         url: url
     };
-    prop.forEach(elm => {
-        const key_value = elm.split('=');
-        output[key_value[0]] = key_value[1];
+    splits = splits.filter(elm => {
+        return elm != '';
     });
 
+    try {
+        const prop = splits[1].split('&');
+        prop.forEach(elm => {
+            const key_value = elm.split('=').filter(elm => {
+                return elm != '';
+            });
+            if (key_value[0] == '' || key_value[1] == '');
+            else
+                output[key_value[0]] = key_value[1];
+        });
+    } catch {
+
+    }
     return output;
 };

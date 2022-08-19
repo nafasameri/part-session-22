@@ -17,33 +17,47 @@ const products = [
 ]
 
 const crud = {
-    'GET': (list, key_val) => {
+    'GET': (res, list, key_val) => {
         res.setHeader('Content-Type', 'application/json');
-        res.write(JSON.stringify(list));
 
-        let isFound = false;
-        list.forEach((elm) => {
-            if (elm[key_val[0]] == key_val[1]) {
-                isFound = true;
+        try {
+            if (key_val[0][1] == -1)
                 res.write(JSON.stringify({
                     status: 200,
                     message: 'successfull fetch',
-                    data: JSON.stringify(elm)
+                    data: JSON.stringify(list)
                 }));
-            }
-        });
-        if (!isFound)
-            res.write(JSON.stringify({ status: 404, message: 'Not Found!' }));
+            else {
+                const output = [];
+                key_val.forEach((elm) => {
+                    const row = list.filter(val => val[elm[0]] == elm[1]);
+                    if (row.length != 0)
+                        output.push(row);
+                });
 
+                if (output.length != 0)
+                    res.write(JSON.stringify({
+                        status: 200,
+                        message: 'successfull fetch',
+                        data: JSON.stringify(output)
+                    }));
+                else
+                    res.write(JSON.stringify({ status: 404, message: 'Not Found!' }));
+            }
+        } catch (error) {
+
+        }
         return res.end();
     },
-    'POST': (list, data) => {
+    'POST': (res, list, data) => {
         res.setHeader('Content-Type', 'application/json');
         try {
             list.push(data);
+            data = JSON.parse(data);
+
             res.write(JSON.stringify({
                 status: 200,
-                message: `successfull add with id ${sucess} `,
+                message: `successfull add with id ${data[Object.keys(data)[0]]}`,
                 data: JSON.stringify(data)
             }));
         } catch (error) {
@@ -54,7 +68,7 @@ const crud = {
         }
         return res.end();
     },
-    'PUT': (list, key_val, data) => {
+    'PUT': (res, list, key_val, data) => {
         res.setHeader('Content-Type', 'application/json');
         try {
             let isFound = false;
@@ -82,13 +96,13 @@ const crud = {
 
         return res.end();
     },
-    'DELETE': (list, key_val) => {
+    'DELETE': (res, list, key_val) => {
         res.setHeader('Content-Type', 'application/json');
 
         let isFound = false;
         list.forEach((elm, index) => {
             if (elm[key_val[0]] == key_val[1]) {
-                delete list[index];
+                list.splice(index, 1);
                 isFound = true;
                 res.write(JSON.stringify({
                     status: 200,
@@ -108,24 +122,59 @@ const crud = {
 
 
 const router = {
-    '/users': (req, res) => {
-        const { url, method } = req;
-        return crud.GET(users, ['id', -1]);
-    },
-    '/products': (req, res) => {
-        const { url, method } = req;
-        return crud.GET(products, ['pid', -1]);
-    },
-    '/users-withfilter': (req, res, keys, values) => {
-        const { url, method } = req;
-        res.setHeader('Content-Type', 'application/json');
-        let output = [];
-        for (let i = 1; i < keys.lenght; i++) {
-            console.log(users[keys[i]], values[i]);
-            output.push(users.filter(u => u[keys[i]] == values[i]));
+    '/users': (req, res, query) => {
+        const { method } = req;
+        let data = '';
+        req.on('data', function (chunk) {
+            data += chunk.toString();
+        });
+
+        if (method == 'GET') {
+            key_val = KeyVal(query);
+            return crud[method](res, users, key_val);
         }
-        res.write(JSON.stringify(output));
-        return res.end();
+        if (method == 'POST') {
+            req.on('end', () => {
+                return crud[method](res, users, data);
+            });
+        }
+        if (method == 'PUT') {
+            key_val = KeyVal(query);
+            req.on('end', () => {
+                return crud[method](res, users, key_val[0], data);
+            });
+        }
+        if (method == 'DELETE') {
+            key_val = KeyVal(query);
+            return crud[method](res, users, key_val[0]);
+        }
+    },
+    '/products': (req, res, query) => {
+        const { method } = req;
+        let data = '';
+        req.on('data', function (chunk) {
+            data += chunk.toString();
+        });
+
+        if (method == 'GET') {
+            key_val = KeyVal(query);
+            return crud[method](res, products, key_val);
+        }
+        if (method == 'POST') {
+            req.on('end', () => {
+                return crud[method](res, products, data);
+            });
+        }
+        if (method == 'PUT') {
+            key_val = KeyVal(query);
+            req.on('end', () => {
+                return crud[method](res, products, key_val[0], data);
+            });
+        }
+        if (method == 'DELETE') {
+            key_val = KeyVal(query);
+            return crud[method](res, products, key_val[0]);
+        }
     },
     '404': (req, res) => {
         const { url } = req;
@@ -135,18 +184,26 @@ const router = {
     }
 }
 
+function KeyVal(query) {
+    key_val = [];
+    for (const key in query) {
+        if (key != 'url')
+            key_val.push([key, query[key]]);
+    }
+    return key_val;
+}
 
 const requestHandler = (req, res) => {
     const { url, method } = req;
 
-    if (url in router) {
-        return router[url](req, res);
+    const query = queryGetParser(url);
+    console.log(query);
+
+    if (query.url in router) {
+        return router[query.url](req, res, query);
     }
 
-    const query = queryGetParser(url);
-    return router[query.url + '-withfilter'](req, res, Object.keys(query), Object.values(query));
-
-    // return router['404'](req, res);
+    return router['404'](req, res);
 };
 
 
