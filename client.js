@@ -8,7 +8,7 @@ logger.level = 'debug';
 let option = {
     hostname: 'localhost',
     port: process.env.port || 5000,
-    path: '/products??pid==-1',
+    path: '/products',
     headers: {
         'Content-Type': 'application/json',
     },

@@ -17,43 +17,49 @@ const products = [
 ]
 
 const crud = {
-    'GET': (res, list, key_val) => {
+    'GET': (res, list, key_val, pagination) => {
         res.setHeader('Content-Type', 'application/json');
+        pagination.page = pagination.page == undefined ? 1 : pagination.page;
+        pagination.nperpage = pagination.nperpage == undefined ? 10 : pagination.nperpage;
 
         try {
-            if (key_val[0][1] == -1)
-                res.write(JSON.stringify({
-                    status: 200,
-                    message: 'successfull fetch',
-                    data: JSON.stringify(list)
-                }));
+            let data = [];
+            if (key_val.length == 0) {
+                data = list;
+            }
             else {
-                const output = [];
+                data = [];
                 key_val.forEach((elm) => {
                     const row = list.filter(val => val[elm[0]] == elm[1]);
                     if (row.length != 0)
-                        output.push(row);
+                        data.push(row);
                 });
 
-                if (output.length != 0)
-                    res.write(JSON.stringify({
-                        status: 200,
-                        message: 'successfull fetch',
-                        data: JSON.stringify(output)
-                    }));
-                else
-                    res.write(JSON.stringify({ status: 404, message: 'Not Found!' }));
+                if (data.length == 0)
+                    res.write(JSON.stringify({ status: 404, message: 'Data Not Found!' }));
             }
-        } catch (error) {
 
+            const output = [];
+            for (let i = (pagination.page - 1) * pagination.nperpage; i < pagination.page * pagination.nperpage; i++) {
+                if (data[i] != null)
+                    output.push(data[i]);
+            }
+            res.write(JSON.stringify({
+                status: 200,
+                message: 'successfull fetch',
+                data: JSON.stringify(output)
+                // data: JSON.stringify(data.splice((pagination.page - 1) * pagination.nperpage, pagination.page * pagination.nperpage))
+            }));
+        } catch (error) {
+            res.write(JSON.stringify({ status: 400, message: error.toString() }));
         }
         return res.end();
     },
     'POST': (res, list, data) => {
         res.setHeader('Content-Type', 'application/json');
         try {
-            list.push(data);
             data = JSON.parse(data);
+            list.push(data);
 
             res.write(JSON.stringify({
                 status: 200,
@@ -85,7 +91,7 @@ const crud = {
             if (!isFound)
                 res.write(JSON.stringify({
                     status: 404,
-                    message: 'Not Found!'
+                    message: 'Data Not Found!'
                 }));
         } catch (error) {
             res.write(JSON.stringify({
@@ -113,7 +119,7 @@ const crud = {
         if (!isFound)
             res.write(JSON.stringify({
                 status: 404,
-                message: 'Not Found!'
+                message: 'Data Not Found!'
             }));
 
         return res.end();
@@ -130,8 +136,13 @@ const router = {
         });
 
         if (method == 'GET') {
+            const { page, nperpage } = query;
+
+            delete query.page;
+            delete query.nperpage;
             key_val = KeyVal(query);
-            return crud[method](res, users, key_val);
+
+            return crud[method](res, users, key_val, { page: page, nperpage: nperpage });
         }
         if (method == 'POST') {
             req.on('end', () => {
@@ -157,8 +168,13 @@ const router = {
         });
 
         if (method == 'GET') {
+            const { page, nperpage } = query;
+
+            delete query.page;
+            delete query.nperpage;
             key_val = KeyVal(query);
-            return crud[method](res, products, key_val);
+
+            return crud[method](res, products, key_val, { page: page, nperpage: nperpage });
         }
         if (method == 'POST') {
             req.on('end', () => {
@@ -193,7 +209,7 @@ function KeyVal(query) {
     return key_val;
 }
 
-const requestHandler = (req, res) => {
+module.exports = (req, res) => {
     const { url, method } = req;
 
     const query = queryGetParser(url);
@@ -205,6 +221,3 @@ const requestHandler = (req, res) => {
 
     return router['404'](req, res);
 };
-
-
-module.exports = requestHandler;
