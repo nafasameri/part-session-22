@@ -1,4 +1,58 @@
 const queryGetParser = require('query-get-parser');
+const statistics = {
+    users: {
+        GET: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        POST: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        PUT: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        DELETE: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        }
+    },
+    products: {
+        GET: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        POST: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        PUT: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        },
+        DELETE: {
+            requestTimes: [],
+            avgTime: 0,
+            totalTime: 0,
+            requestCounts: 0
+        }
+    }
+};
 
 const users = [
     { id: 1, name: 'reza', age: 10 },
@@ -129,6 +183,7 @@ const crud = {
 
 const router = {
     '/users': (req, res, query) => {
+        const startDate = Date.now();
         const { method } = req;
         let data = '';
         req.on('data', function (chunk) {
@@ -142,7 +197,7 @@ const router = {
             delete query.nperpage;
             key_val = KeyVal(query);
 
-            return crud[method](res, users, key_val, { page: page, nperpage: nperpage });
+            crud[method](res, users, key_val, { page: page, nperpage: nperpage });
         }
         if (method == 'POST') {
             req.on('end', () => {
@@ -159,8 +214,10 @@ const router = {
             key_val = KeyVal(query);
             return crud[method](res, users, key_val[0]);
         }
+        createStatistics(startDate, statistics.users[method]);
     },
     '/products': (req, res, query) => {
+        const startDate = Date.now();
         const { method } = req;
         let data = '';
         req.on('data', function (chunk) {
@@ -191,9 +248,14 @@ const router = {
             key_val = KeyVal(query);
             return crud[method](res, products, key_val[0]);
         }
+        createStatistics(startDate, statistics.products[method]);
+    },
+    '/statistics': (req, res, query) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.write(JSON.stringify(statistics.users.GET, 4));
+        return res.end();
     },
     '404': (req, res) => {
-        const { url } = req;
         res.setHeader('Content-Type', 'application/json');
         res.write(JSON.stringify({ status: 404, message: 'Not found!' }));
         return res.end();
@@ -207,6 +269,18 @@ function KeyVal(query) {
             key_val.push([key, query[key]]);
     }
     return key_val;
+}
+
+function createStatistics(startDate, statistic) {
+    const endDate = Date.now();
+    statistic.requestTimes.push({
+        startDate: startDate,
+        endDate: endDate,
+        duration: endDate - startDate
+    });
+    statistic.requestCounts++;
+    statistic.totalTime = statistic.requestTimes.reduce((a, b) => a.duration + b.duration);
+    statistic.avgTime = statistic.totalTime / statistic.requestCounts;
 }
 
 module.exports = (req, res) => {

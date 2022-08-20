@@ -8,7 +8,7 @@ logger.level = 'debug';
 let option = {
     hostname: 'localhost',
     port: process.env.port || 5000,
-    path: '/products',
+    path: '/users',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -23,3 +23,14 @@ const req = http.request(option, (res) => {
 });
 req.write(JSON.stringify({ pid: 6, name: 'p6', price: 1600 }));
 req.end();
+
+http.request({
+    hostname: 'localhost',
+    port: process.env.port || 5000,
+    path: '/statistics'
+}, (res) => {
+    res.on('data', (chunk) => {
+        const data = JSON.parse(chunk);
+        logger.info(data);
+    });
+}).end();

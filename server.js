@@ -1,5 +1,9 @@
 const http = require('http');
+const log4js = require('log4js');
 const requestHandler = require('./router');
+
+const logger = log4js.getLogger();
+logger.level = 'debug';
 
 const server = http.createServer(requestHandler);
 
