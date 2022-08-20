@@ -1,56 +1,25 @@
 const queryGetParser = require('query-get-parser');
+function statisticsDetail() {
+    return {
+        requestTimes: [],
+        avgTime: 0,
+        totalTime: 0,
+        requestCounts: 0
+    };
+}
+
 const statistics = {
     users: {
-        GET: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        POST: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        PUT: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        DELETE: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        }
+        GET: statisticsDetail(),
+        POST: statisticsDetail(),
+        PUT: statisticsDetail(),
+        DELETE: statisticsDetail()
     },
     products: {
-        GET: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        POST: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        PUT: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        },
-        DELETE: {
-            requestTimes: [],
-            avgTime: 0,
-            totalTime: 0,
-            requestCounts: 0
-        }
+        GET: statisticsDetail(),
+        POST: statisticsDetail(),
+        PUT: statisticsDetail(),
+        DELETE: statisticsDetail()
     }
 };
 
@@ -116,7 +85,7 @@ const crud = {
             list.push(data);
 
             res.write(JSON.stringify({
-                status: 200,
+                status: 201,
                 message: `successfull add with id ${data[Object.keys(data)[0]]}`,
                 data: JSON.stringify(data)
             }));
@@ -165,7 +134,7 @@ const crud = {
                 list.splice(index, 1);
                 isFound = true;
                 res.write(JSON.stringify({
-                    status: 200,
+                    status: 204,
                     message: `successfull deleted with id ${elm[key_val[0]]} `
                 }));
             }
