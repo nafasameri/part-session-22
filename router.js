@@ -221,7 +221,7 @@ const router = {
     },
     '/statistics': (req, res, query) => {
         res.setHeader('Content-Type', 'application/json');
-        res.write(JSON.stringify(statistics.users.GET, 4));
+        res.write(JSON.stringify(statistics));
         return res.end();
     },
     '404': (req, res) => {
@@ -248,7 +248,7 @@ function createStatistics(startDate, statistic) {
         duration: endDate - startDate
     });
     statistic.requestCounts++;
-    statistic.totalTime = statistic.requestTimes.reduce((a, b) => a.duration + b.duration);
+    statistic.totalTime = statistic.requestTimes.reduce((accumulator, curr) => accumulator + curr.duration, 0);
     statistic.avgTime = statistic.totalTime / statistic.requestCounts;
 }
 
